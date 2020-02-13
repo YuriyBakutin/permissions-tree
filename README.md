@@ -1,29 +1,24 @@
 # permissions-tree
 
-## Project setup
-```
-npm install
-```
+Это учебный проект, в котором создаётся vue-элемент для редактирования прав доступа.
 
-### Compiles and hot-reloads for development
-```
-npm run serve
-```
+Задание сформулировано следующим образом:
 
-### Compiles and minifies for production
+>*На входе массив объектов (прав доступа).*  
+>
+>*Примерная структура объекта:*
+```json
+{
+id: 10,
+parentId: 1
+name: "Редактировать пользователя"
+checked: true
+}
 ```
-npm run build
-```
+>*Отобразить этот массив в виде древовидной структуры, группировка по parentId.*  
+>
+>*Главное чтоб это решение не имело предела вложенности потомков.*  
+>
+>*Каждый элемент имеет чекбокс который контролирует как свое внутреннее свойство checked, так и свойство его родителя. Например свойство checked родителя может иметь значение true но сам чекбокс будет в состоянии indeterminate это если не у всех потомков checked однозначно.*
+  
 
-### Run your tests
-```
-npm run test
-```
-
-### Lints and fixes files
-```
-npm run lint
-```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
