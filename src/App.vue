@@ -1,7 +1,7 @@
 <template>
-  <div id="app">
-    <TreeNode/>
-  </div>
+    <div id="app">
+        <TreeNode/>
+    </div>
 </template>
 
 <script lang="ts">
@@ -9,9 +9,9 @@ import { Component, Vue } from 'vue-property-decorator';
 import TreeNode from './components/TreeNode.vue';
 
 @Component({
-  components: {
-    TreeNode,
-  },
+    components: {
+        TreeNode,
+    },
 })
 export default class App extends Vue {}
 </script>

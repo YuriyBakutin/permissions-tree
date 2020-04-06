@@ -18,14 +18,14 @@
                 v-bind:checked="childData.checked"
                 v-bind:parentChecked="checkedData"
                 v-bind:depth="isRoot ? 0 : +depth + 1"
-                v-on:need-update-status="updateStatus_"
+                v-on:need-recalculate-status="recalculateStatus"
             />
         </div>
     </div>
 </template>
 
 <script lang="ts">
-import { Component, Prop, Watch, Vue } from 'vue-property-decorator';
+import { Component, Prop, Vue } from 'vue-property-decorator';
 import IPermissionNode from '../IPermissionNode';
 import permissionData from '../permissionData';
 
@@ -48,6 +48,32 @@ export default class TreeNode extends Vue {
     private get isRoot(): boolean {
         return this.permissionId == null;
     }
+    private checkedData: boolean | undefined | null =
+        this.checked && (!this.parentId || this.parentChecked);
+    private get nodeDataIndex(): number {
+        return permissionData.findIndex(
+            (childData) => childData.id == this.permissionId
+        );
+    }
+    private toggleChecked(): void {
+        this.checkedData = !this.checkedData
+    }
+
+    private get status(): boolean | undefined | null {
+        this.getStatus();
+        this.$emit('need-recalculate-status');
+        return permissionData[this.permissionDataArrayIndex].status
+    }
+    private get statusSymbol(): string {
+        const status = this.status;
+        if ( status == null ) {
+            return INDETERMINATE;
+        }
+        if ( status ) {
+            return CHEKED;
+        }
+        return UNCHEKED;
+    }
     private expanded: boolean = true;
     private get expandedSymbol(): string {
         if ( !this.hasChildren ) {
@@ -58,7 +84,7 @@ export default class TreeNode extends Vue {
         }
         return COLLAPSED;
     }
-    private get DataArrayIndex(): number {
+    private get permissionDataArrayIndex(): number {
         for ( let i: number = 0, max = permissionData.length; i < max; i++ ) {
             if ( permissionData[i].id == this.permissionId ) {
                 return i;
@@ -75,55 +101,19 @@ export default class TreeNode extends Vue {
         }
         return childrenIds;
     }
-    private childrenData: IPermissionNode[] = [];
-    private updateChildrenData(): void {
+    private get childrenData(): IPermissionNode[] {
+        const childrenData: IPermissionNode[] = [];
         for ( let i = 0, max = this.childrenIds.length; i < max; i++ ) {
-            Vue.set(this.childrenData, i, permissionData[this.childrenIds[i]])
+            childrenData.push(permissionData[this.childrenIds[i]]);
         }
-    }
-    private beforeMount () {
-    // private mounted () {
-        this.updateChildrenData();
-        this.updateStatus();
-        // this.status = true;
+        return childrenData;
     }
     private get hasChildren(): boolean {
         return this.childrenIds.length > 0;
     }
-
-    private checkedData: boolean | undefined | null = this.checked;
-    private toggleChecked(): void {
-        permissionData[this.DataArrayIndex].checked = !this.checkedData;
-        this.checkedData = permissionData[this.DataArrayIndex].checked;
-        this.updateStatus();
-    }
-    @Watch('parentChecked') onChangeParentChecked(val: boolean, oldVal: boolean) {
-        this.checkedData = this.checkedData && val;
-        this.updateStatus();
-    }
-    private status: boolean | undefined | null = null;
-    @Watch('status') onChangeStatus(val: boolean, oldVal: boolean) {
-        if ( val !== oldVal ) {
-            this.$emit('need-update-status', {
-                id: this.permissionId,
-                status: this.status
-            });
-        }
-    }
-    private get statusSymbol(): string {
-        if ( this.status == null ) {
-            return INDETERMINATE;
-        }
-        if ( this.status ) {
-            return CHEKED;
-        }
-        return UNCHEKED;
-    }
-    private updateStatus_(): void {
-        this.message = this.message + '>> '
-    }
-    private updateStatus(): void {
-        let status;
+    // private getStatus(): boolean | undefined | null {
+    private getStatus(): void {
+        let status: boolean | undefined | null;
         if ( this.isRoot ) {
             return;
         }
@@ -134,20 +124,20 @@ export default class TreeNode extends Vue {
                 permissionData[i].checked = false;
             })
             status = false;
-            this.updateChildrenData();
         } else if (
             this.childrenIds.find((i) => !permissionData[i].status)
         ) {
             // Сам параметр — разрешено но не у всех дочерних статус определён в разрешено
-            this.updateChildrenData();
             status = null;
-            // this.message = this.childrenData.map((c) => c.id).toString();
+            this.message = this.childrenData.map((c) => c.status).toString();
         } else {
             // Сам параметр — разрешено и статус всех дочерних определён в разрешено
             status = true;
         }
-        permissionData[this.DataArrayIndex].status = status;
-        this.status = status;
+        permissionData[this.permissionDataArrayIndex].status = status;
+    }
+    private recalculateStatus() {
+        this.getStatus();
     }
 }
 
